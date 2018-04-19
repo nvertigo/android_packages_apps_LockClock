@@ -32,8 +32,6 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.os.Looper;
 import android.os.Message;
-import android.os.PowerManager;
-import android.os.PowerManager.WakeLock;
 import android.os.SystemClock;
 import android.text.TextUtils;
 import android.util.Log;
@@ -200,7 +198,6 @@ public class WeatherUpdateService extends Service {
 
         private Handler mHandler;
         private boolean mIsProcessingWeatherUpdate = false;
-        private WakeLock mWakeLock;
         private PendingIntent mTimeoutPendingIntent;
         private int mRequestId;
         private final LineageWeatherManager mWeatherManager;
@@ -273,12 +270,6 @@ public class WeatherUpdateService extends Service {
             }
 
             mIsProcessingWeatherUpdate = true;
-            final PowerManager pm
-                    = (PowerManager) mContext.getSystemService(POWER_SERVICE);
-            mWakeLock = pm.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, TAG);
-            mWakeLock.setReferenceCounted(false);
-            if (D) Log.v(TAG, "ACQUIRING WAKELOCK");
-            mWakeLock.acquire();
 
             WeatherLocation customWeatherLocation = null;
             if (Preferences.useCustomWeatherLocation(mContext)) {
@@ -404,8 +395,6 @@ public class WeatherUpdateService extends Service {
             finishedIntent.putExtra(EXTRA_UPDATE_CANCELLED, updateCancelled);
             mContext.sendBroadcast(finishedIntent);
 
-            if (D) Log.d(TAG, "RELEASING WAKELOCK");
-            mWakeLock.release();
             mIsProcessingWeatherUpdate = false;
             mContext.stopService(new Intent(mContext, WeatherUpdateService.class));
         }
